@@ -1,14 +1,13 @@
 package com.autobots.automanager.modelo;
 
-import java.util.List;
-
+import com.autobots.automanager.dto.TelefoneDTO;
 import com.autobots.automanager.entidades.Telefone;
 
 public class TelefoneAtualizador {
 
     private StringVerificadorNulo verificador = new StringVerificadorNulo();
 
-    public void atualizar(Telefone telefone, Telefone atualizacao) {
+    public void atualizar(Telefone telefone, TelefoneDTO atualizacao) {
         if (atualizacao == null) {
             return;
         }
@@ -17,22 +16,6 @@ public class TelefoneAtualizador {
         }
         if (!verificador.verificar(atualizacao.getNumero())) {
             telefone.setNumero(atualizacao.getNumero());
-        }
-    }
-
-    public void atualizar(List<Telefone> telefones, List<Telefone> atualizacoes) {
-        if (telefones == null || atualizacoes == null) {
-            return;
-        }
-        for (Telefone atualizacao : atualizacoes) {
-            if (atualizacao.getId() == null) {
-                continue;
-            }
-            for (Telefone telefone : telefones) {
-                if (atualizacao.getId().equals(telefone.getId())) {
-                    atualizar(telefone, atualizacao);
-                }
-            }
         }
     }
 }

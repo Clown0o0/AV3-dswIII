@@ -25,11 +25,12 @@ import com.autobots.automanager.entidades.Documento;
 import com.autobots.automanager.modelo.AdicionadorLinkDocumento;
 import com.autobots.automanager.service.DocumentoService;
 
-/**
- * Rotas de gerenciamento de documentos vinculados a um cliente.
- */
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/documentos")
+@Tag(name = "Documentos", description = "Rotas dos documentos dos usuários.")
 public class DocumentoControle {
 
     @Autowired
@@ -38,13 +39,15 @@ public class DocumentoControle {
     @Autowired
     private AdicionadorLinkDocumento adicionadorLink;
 
-    @PostMapping("/{clienteId}")
-    public ResponseEntity<Documento> criar(@PathVariable Long clienteId, @RequestBody @Valid DocumentoDTO dto) {
-        Documento documento = service.criar(clienteId, dto);
+    @Operation(summary = "Cadastra um documento para um usuário (usuarioId)")
+    @PostMapping
+    public ResponseEntity<Documento> criar(@RequestBody @Valid DocumentoDTO dto) {
+        Documento documento = service.criar(dto);
         adicionadorLink.adicionarLink(documento);
         return ResponseEntity.created(documento.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(documento);
     }
 
+    @Operation(summary = "Lista os documentos")
     @GetMapping
     public ResponseEntity<CollectionModel<Documento>> listar() {
         List<Documento> lista = service.listar();
@@ -52,6 +55,7 @@ public class DocumentoControle {
         return ResponseEntity.ok(CollectionModel.of(lista, linkTo(methodOn(DocumentoControle.class).listar()).withSelfRel()));
     }
 
+    @Operation(summary = "Busca um documento pelo id")
     @GetMapping("/{id}")
     public ResponseEntity<Documento> buscar(@PathVariable Long id) {
         Documento documento = service.buscar(id);
@@ -59,6 +63,7 @@ public class DocumentoControle {
         return ResponseEntity.ok(documento);
     }
 
+    @Operation(summary = "Atualiza um documento")
     @PutMapping("/{id}")
     public ResponseEntity<Documento> atualizar(@PathVariable Long id, @RequestBody @Valid DocumentoDTO dto) {
         Documento documento = service.atualizar(id, dto);
@@ -66,6 +71,7 @@ public class DocumentoControle {
         return ResponseEntity.ok(documento);
     }
 
+    @Operation(summary = "Exclui um documento")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id);

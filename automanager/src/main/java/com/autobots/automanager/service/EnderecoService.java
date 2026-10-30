@@ -3,71 +3,90 @@ package com.autobots.automanager.service;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import com.autobots.automanager.dto.EnderecoDTO;
-import com.autobots.automanager.entidades.Cliente;
+import com.autobots.automanager.dto.validacao.Atualizacao;
+import com.autobots.automanager.dto.validacao.Criacao;
+import com.autobots.automanager.dto.validacao.Vinculo;
+import com.autobots.automanager.entidades.Empresa;
 import com.autobots.automanager.entidades.Endereco;
+import com.autobots.automanager.entidades.Usuario;
 import com.autobots.automanager.exception.ConflitoException;
-import com.autobots.automanager.exception.RecursoNaoEncontradoException;
 import com.autobots.automanager.modelo.EnderecoAtualizador;
-import com.autobots.automanager.repositorios.ClienteRepositorio;
+import com.autobots.automanager.repositorios.EmpresaRepositorio;
 import com.autobots.automanager.repositorios.EnderecoRepositorio;
+import com.autobots.automanager.repositorios.UsuarioRepositorio;
 
-/**
- * Regras de negócio relacionadas ao endereço do cliente.
- */
 @Service
+@Validated
 public class EnderecoService {
 
     @Autowired
     private EnderecoRepositorio repositorio;
 
     @Autowired
-    private ClienteRepositorio clienteRepositorio;
+    private UsuarioRepositorio usuarioRepositorio;
+
+    @Autowired
+    private EmpresaRepositorio empresaRepositorio;
+
+    @Autowired
+    private LocalizadorService localizador;
 
     private final EnderecoAtualizador atualizador = new EnderecoAtualizador();
 
     @Transactional
-    public Endereco criar(Long clienteId, EnderecoDTO dto) {
-        Cliente cliente = clienteRepositorio.findById(clienteId)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhum cliente encontrado com o id " + clienteId));
-
-        if (cliente.getEndereco() != null) {
-            throw new ConflitoException("O cliente com o id " + clienteId + " já possui endereço");
+    @Validated({ Criacao.class, Vinculo.class })
+    public Endereco criar(@Valid EnderecoDTO dto) {
+        Endereco endereco = dto.paraEntidade();
+        if (dto.getUsuarioId() != null) {
+            Usuario dono = localizador.usuario(dto.getUsuarioId());
+            if (dono.getEndereco() != null) {
+                throw new ConflitoException("O usuário com o id " + dono.getId() + " já possui endereço");
+            }
+            dono.setEndereco(repositorio.save(endereco));
+        } else {
+            Empresa dono = localizador.empresa(dto.getEmpresaId());
+            if (dono.getEndereco() != null) {
+                throw new ConflitoException("A empresa com o id " + dono.getId() + " já possui endereço");
+            }
+            dono.setEndereco(repositorio.save(endereco));
         }
-
-        Endereco endereco = repositorio.save(dto.paraEntidade());
-        cliente.setEndereco(endereco);
-        clienteRepositorio.save(cliente);
         return endereco;
     }
 
     public List<Endereco> listar() {
-        return repositorio.findAll();
+        return repositorio.findAll(Sort.by("id"));
     }
 
     public Endereco buscar(Long id) {
-        return repositorio.findById(id)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhum endereço encontrado com o id " + id));
+        return localizador.endereco(id);
     }
 
-    public Endereco atualizar(Long id, EnderecoDTO dto) {
+    @Transactional
+    @Validated(Atualizacao.class)
+    public Endereco atualizar(Long id, @Valid EnderecoDTO dto) {
         Endereco endereco = buscar(id);
-        atualizador.atualizar(endereco, dto.paraEntidade());
+        atualizador.atualizar(endereco, dto);
         return repositorio.save(endereco);
     }
 
     @Transactional
     public void deletar(Long id) {
         Endereco endereco = buscar(id);
-        Optional<Cliente> dono = clienteRepositorio.findByEnderecoId(id);
-        if (dono.isPresent()) {
-            Cliente cliente = dono.get();
-            cliente.setEndereco(null);
-            clienteRepositorio.save(cliente);
+        Optional<Usuario> usuario = usuarioRepositorio.findByEnderecoId(id);
+        Optional<Empresa> empresa = empresaRepositorio.findByEnderecoId(id);
+        if (usuario.isPresent()) {
+            usuario.get().setEndereco(null);
+        } else if (empresa.isPresent()) {
+            empresa.get().setEndereco(null);
         } else {
             repositorio.delete(endereco);
         }

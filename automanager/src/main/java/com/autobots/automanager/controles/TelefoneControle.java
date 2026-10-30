@@ -25,11 +25,12 @@ import com.autobots.automanager.entidades.Telefone;
 import com.autobots.automanager.modelo.AdicionadorLinkTelefone;
 import com.autobots.automanager.service.TelefoneService;
 
-/**
- * Rotas de gerenciamento de telefones vinculados a um cliente.
- */
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/telefones")
+@Tag(name = "Telefones", description = "Rotas dos telefones de usuários e empresas.")
 public class TelefoneControle {
 
     @Autowired
@@ -38,13 +39,15 @@ public class TelefoneControle {
     @Autowired
     private AdicionadorLinkTelefone adicionadorLink;
 
-    @PostMapping("/{clienteId}")
-    public ResponseEntity<Telefone> criar(@PathVariable Long clienteId, @RequestBody @Valid TelefoneDTO dto) {
-        Telefone telefone = service.criar(clienteId, dto);
+    @Operation(summary = "Cadastra um telefone para um usuário (usuarioId) ou empresa (empresaId)")
+    @PostMapping
+    public ResponseEntity<Telefone> criar(@RequestBody @Valid TelefoneDTO dto) {
+        Telefone telefone = service.criar(dto);
         adicionadorLink.adicionarLink(telefone);
         return ResponseEntity.created(telefone.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(telefone);
     }
 
+    @Operation(summary = "Lista os telefones")
     @GetMapping
     public ResponseEntity<CollectionModel<Telefone>> listar() {
         List<Telefone> lista = service.listar();
@@ -52,6 +55,7 @@ public class TelefoneControle {
         return ResponseEntity.ok(CollectionModel.of(lista, linkTo(methodOn(TelefoneControle.class).listar()).withSelfRel()));
     }
 
+    @Operation(summary = "Busca um telefone pelo id")
     @GetMapping("/{id}")
     public ResponseEntity<Telefone> buscar(@PathVariable Long id) {
         Telefone telefone = service.buscar(id);
@@ -59,6 +63,7 @@ public class TelefoneControle {
         return ResponseEntity.ok(telefone);
     }
 
+    @Operation(summary = "Atualiza um telefone")
     @PutMapping("/{id}")
     public ResponseEntity<Telefone> atualizar(@PathVariable Long id, @RequestBody @Valid TelefoneDTO dto) {
         Telefone telefone = service.atualizar(id, dto);
@@ -66,6 +71,7 @@ public class TelefoneControle {
         return ResponseEntity.ok(telefone);
     }
 
+    @Operation(summary = "Exclui um telefone")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id);

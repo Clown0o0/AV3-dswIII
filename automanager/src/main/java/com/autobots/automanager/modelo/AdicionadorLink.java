@@ -1,10 +1,12 @@
 package com.autobots.automanager.modelo;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface AdicionadorLink<T> {
 
-    void adicionarLink(List<T> lista);
+    default void adicionarLink(Collection<? extends T> lista) {
+        lista.forEach(this::adicionarLink);
+    }
 
     void adicionarLink(T objeto);
 }

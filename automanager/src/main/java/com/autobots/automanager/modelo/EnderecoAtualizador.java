@@ -1,13 +1,14 @@
 package com.autobots.automanager.modelo;
 
+import com.autobots.automanager.dto.EnderecoDTO;
 import com.autobots.automanager.entidades.Endereco;
 
 public class EnderecoAtualizador {
 
     private StringVerificadorNulo verificador = new StringVerificadorNulo();
 
-    public void atualizar(Endereco endereco, Endereco atualizacao) {
-        if (atualizacao == null) {
+    public void atualizar(Endereco endereco, EnderecoDTO atualizacao) {
+        if (endereco == null || atualizacao == null) {
             return;
         }
         if (!verificador.verificar(atualizacao.getEstado())) {

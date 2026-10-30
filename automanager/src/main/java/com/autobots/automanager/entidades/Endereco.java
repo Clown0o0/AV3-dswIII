@@ -6,29 +6,28 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
-@EqualsAndHashCode(callSuper = false)
+@Getter
+@Setter
 @Entity
 @Relation(collectionRelation = "enderecos")
-public class Endereco extends RepresentationModel<Endereco> {
+public class Endereco extends Entidade<Endereco> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String estado;
 
     @Column(nullable = false)
     private String cidade;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String bairro;
 
     @Column(nullable = false)
@@ -37,9 +36,9 @@ public class Endereco extends RepresentationModel<Endereco> {
     @Column(nullable = false)
     private String numero;
 
-    @Column(nullable = true)
+    @Column(nullable = false)
     private String codigoPostal;
 
-    @Column(nullable = true)
+    @Column
     private String informacoesAdicionais;
 }

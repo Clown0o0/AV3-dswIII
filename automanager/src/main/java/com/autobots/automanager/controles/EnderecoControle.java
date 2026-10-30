@@ -25,11 +25,12 @@ import com.autobots.automanager.entidades.Endereco;
 import com.autobots.automanager.modelo.AdicionadorLinkEndereco;
 import com.autobots.automanager.service.EnderecoService;
 
-/**
- * Rotas de gerenciamento do endereço (relação 1:1 com o cliente).
- */
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/enderecos")
+@Tag(name = "Endereços", description = "Rotas do endereço (1:1) de usuários e empresas.")
 public class EnderecoControle {
 
     @Autowired
@@ -38,13 +39,15 @@ public class EnderecoControle {
     @Autowired
     private AdicionadorLinkEndereco adicionadorLink;
 
-    @PostMapping("/{clienteId}")
-    public ResponseEntity<Endereco> criar(@PathVariable Long clienteId, @RequestBody @Valid EnderecoDTO dto) {
-        Endereco endereco = service.criar(clienteId, dto);
+    @Operation(summary = "Cadastra o endereço de um usuário (usuarioId) ou empresa (empresaId)")
+    @PostMapping
+    public ResponseEntity<Endereco> criar(@RequestBody @Valid EnderecoDTO dto) {
+        Endereco endereco = service.criar(dto);
         adicionadorLink.adicionarLink(endereco);
         return ResponseEntity.created(endereco.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(endereco);
     }
 
+    @Operation(summary = "Lista os endereços")
     @GetMapping
     public ResponseEntity<CollectionModel<Endereco>> listar() {
         List<Endereco> lista = service.listar();
@@ -52,6 +55,7 @@ public class EnderecoControle {
         return ResponseEntity.ok(CollectionModel.of(lista, linkTo(methodOn(EnderecoControle.class).listar()).withSelfRel()));
     }
 
+    @Operation(summary = "Busca um endereço pelo id")
     @GetMapping("/{id}")
     public ResponseEntity<Endereco> buscar(@PathVariable Long id) {
         Endereco endereco = service.buscar(id);
@@ -59,6 +63,7 @@ public class EnderecoControle {
         return ResponseEntity.ok(endereco);
     }
 
+    @Operation(summary = "Atualiza um endereço")
     @PutMapping("/{id}")
     public ResponseEntity<Endereco> atualizar(@PathVariable Long id, @RequestBody @Valid EnderecoDTO dto) {
         Endereco endereco = service.atualizar(id, dto);
@@ -66,6 +71,7 @@ public class EnderecoControle {
         return ResponseEntity.ok(endereco);
     }
 
+    @Operation(summary = "Exclui um endereço")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         service.deletar(id);

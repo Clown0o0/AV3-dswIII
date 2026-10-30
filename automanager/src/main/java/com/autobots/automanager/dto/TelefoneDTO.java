@@ -1,22 +1,31 @@
 package com.autobots.automanager.dto;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 
+import com.autobots.automanager.dto.validacao.Criacao;
+import com.autobots.automanager.dto.validacao.DonoUnico;
+import com.autobots.automanager.dto.validacao.PossuiDono;
+import com.autobots.automanager.dto.validacao.Vinculo;
 import com.autobots.automanager.entidades.Telefone;
 
 import lombok.Data;
 
-/**
- * Dados de entrada de um telefone.
- */
 @Data
-public class TelefoneDTO {
+@DonoUnico(groups = Vinculo.class)
+public class TelefoneDTO implements PossuiDono {
 
-    @NotBlank(message = "O DDD do telefone deve ser informado")
+    @NotBlank(groups = Criacao.class, message = "O DDD do telefone deve ser informado")
+    @Pattern(regexp = "\\d{2}", message = "O DDD deve ter 2 dígitos")
     private String ddd;
 
-    @NotBlank(message = "O número do telefone deve ser informado")
+    @NotBlank(groups = Criacao.class, message = "O número do telefone deve ser informado")
+    @Pattern(regexp = "\\d{4,5}-?\\d{4}", message = "O número do telefone deve ter 8 ou 9 dígitos")
     private String numero;
+
+    private Long usuarioId;
+
+    private Long empresaId;
 
     public Telefone paraEntidade() {
         Telefone telefone = new Telefone();
