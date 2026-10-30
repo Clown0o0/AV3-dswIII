@@ -63,6 +63,14 @@ com.autobots.automanager
 
 ## Executando localmente
 
+### Como funciona
+
+- A API é uma aplicação Spring Boot que, ao subir, abre um servidor web na porta `8080`.
+- Cada requisição HTTP passa por três camadas. O **controle** recebe e valida o JSON, o **service** aplica as regras de negócio e o **repositório** (Spring Data JPA) conversa com o banco. A resposta volta em JSON com `_links` (HATEOAS) apontando para as próximas ações possíveis.
+- O banco é o MySQL por padrão, ou o H2 em memória. As tabelas são recriadas a cada inicialização (`create-drop`), então os dados **não** ficam salvos de uma execução para a outra.
+- Ao subir, a aplicação cadastra dados de exemplo (empresa, funcionária, cliente, veículo, mercadoria, serviço e venda), para você já ter o que consultar.
+- O Swagger UI, em `/swagger-ui/index.html`, permite testar todas as rotas pelo navegador.
+
 ### O que instalar antes
 
 | Ferramenta | Para quê | Onde baixar | Como conferir |
@@ -100,7 +108,7 @@ git --version
 mysql --version
 ```
 
-Se `java -version` mostrar uma versão abaixo de 17, ou se o `mvnw` reclamar do `JAVA_HOME`, veja [Solução de problemas](#solução-de-problemas).
+O `mysql --version` só é necessário para quem vai usar o MySQL; quem for rodar com o [H2](#rodando-sem-mysql-h2) pode ignorar essa linha. Se `java -version` mostrar uma versão abaixo de 17, ou se o `mvnw` reclamar do `JAVA_HOME`, veja [Solução de problemas](#solução-de-problemas).
 
 **3) Informe o usuário e a senha do seu MySQL** em `src/main/resources/application.properties` (dentro de `automanager`):
 
@@ -111,6 +119,14 @@ spring.datasource.password=root
 ```
 
 Troque `root`/`root` pelo usuário e pela senha do seu MySQL e, se ele não estiver na porta `3306`, troque a porta na URL. O banco `av3DW3` é criado automaticamente, e as tabelas são recriadas a cada inicialização (`ddl-auto=create-drop`).
+
+> **Atenção:** o MySQL precisa estar **em execução antes** de subir a aplicação; caso contrário, ela falha com `Communications link failure`.
+>
+> - **Windows:** confira o serviço `MySQL80` (nome criado pelo instalador do MySQL 8.0) em `services.msc`, ou inicie com `net start MySQL80` num terminal aberto como administrador.
+> - **Linux:** `sudo systemctl start mysql` (Debian/Ubuntu); no Fedora/RHEL, o serviço se chama `mysqld`.
+> - **macOS:** pelo painel do MySQL nas Configurações do Sistema ou, se instalou pelo Homebrew, com `brew services start mysql`.
+>
+> Quem for usar o [H2](#rodando-sem-mysql-h2) pode pular este aviso.
 
 **4) Suba a aplicação**
 
@@ -229,6 +245,7 @@ java -jar target/automanager-0.0.1-SNAPSHOT.jar --spring.datasource.url=jdbc:h2:
 | `Communications link failure` | O MySQL não está rodando ou está em outra porta | Inicie o MySQL (no Windows, serviço `MySQL80` em `services.msc`), confira a porta na URL do `application.properties` ou use o [H2](#rodando-sem-mysql-h2) |
 | `Access denied for user 'root'@'localhost'` | Usuário ou senha do MySQL errados | Corrija `spring.datasource.username` e `spring.datasource.password` no `application.properties` |
 | A primeira execução demora vários minutos | O wrapper está baixando o Maven e as dependências | É normal e precisa de internet só na primeira vez; as seguintes usam o cache em `~/.m2` |
+| Erro ao baixar de `repo.maven.apache.org` (ex.: `Could not transfer artifact`, `Connection timed out`, `Unknown host`) | A rede bloqueia o repositório Maven Central ou exige proxy (comum em redes corporativas ou de faculdade) | Teste em outra rede ou configure o proxy em `~/.m2/settings.xml` e repita o comando |
 | `permission denied: ./mvnw` (Linux/macOS) | O arquivo perdeu a permissão de execução | `chmod +x mvnw` |
 | No Windows, o `curl` com acentos no `-d '...'` responde `400` ("Corpo da requisição inválido ou mal formatado") | O console converte os acentos para outra página de código; no PowerShell 5.1, as aspas internas do JSON também se perdem | Grave o JSON num arquivo e envie com `curl.exe ... -d "@arquivo.json"` (no PowerShell, o `@arquivo` precisa estar entre aspas; no CMD, `-d @arquivo.json`), use o Git Bash ou use o Swagger UI |
 
